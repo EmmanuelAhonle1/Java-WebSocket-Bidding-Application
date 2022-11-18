@@ -23,7 +23,7 @@ class Server extends Observable {
 
   private void setUpNetworking() throws Exception {
     @SuppressWarnings("resource")
-    ServerSocket serverSock = new ServerSocket(4242);
+    ServerSocket serverSock = new ServerSocket(5002);
     while (true) {
       Socket clientSocket = serverSock.accept();
       System.out.println("Connecting to... " + clientSocket);

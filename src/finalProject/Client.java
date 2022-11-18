@@ -10,7 +10,7 @@ import com.google.gson.GsonBuilder;
 
 class Client {
 
-  private static String host = "127.0.0.1";
+  private static String host = "192.168.56.1";
   private BufferedReader fromServer;
   private PrintWriter toServer;
   private Scanner consoleInput = new Scanner(System.in);
@@ -25,7 +25,7 @@ class Client {
 
   private void setUpNetworking() throws Exception {
     @SuppressWarnings("resource")
-    Socket socket = new Socket(host, 4242);
+    Socket socket = new Socket(host, 5002);
     System.out.println("Connecting to... " + socket);
     fromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     toServer = new PrintWriter(socket.getOutputStream());
