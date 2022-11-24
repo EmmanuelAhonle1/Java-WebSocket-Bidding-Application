@@ -1,4 +1,4 @@
-package finalProject;
+package dep;
 
 class ClientMessage {
   String type;
@@ -19,3 +19,4 @@ class ClientMessage {
     System.out.println("client-side message created");
   }
 }
+

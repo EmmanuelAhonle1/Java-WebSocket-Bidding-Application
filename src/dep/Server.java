@@ -1,4 +1,4 @@
-package finalProject;
+package dep;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,7 +23,7 @@ class Server extends Observable {
 
   private void setUpNetworking() throws Exception {
     @SuppressWarnings("resource")
-    ServerSocket serverSock = new ServerSocket(5002);
+    ServerSocket serverSock = new ServerSocket(5000);
     while (true) {
       Socket clientSocket = serverSock.accept();
       System.out.println("Connecting to... " + clientSocket);
@@ -63,6 +63,23 @@ class Server extends Observable {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+  
+  protected void loginRequest(String input) {
+	  
+	  String output;
+	    Gson gson = new Gson();
+	    LoginMessage message = gson.fromJson(input, LoginMessage.class);
+		if (message.username.equals("root") &&  message.password.equals("pass")) {
+		  output = "Logging in...";
+	  }
+	  else {
+		  output = "Invalid Username or Password";
+	  }
+	  
+	  this.setChanged();
+	  this.notifyObservers(output);
+	  
   }
 
 }
