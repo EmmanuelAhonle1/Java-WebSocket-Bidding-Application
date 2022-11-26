@@ -102,7 +102,6 @@ public class Client extends Application {
 					
 					String command = l[0];
 					
-					//System.out.println(message);
 					Gson gson = new Gson();
 
 					
@@ -114,9 +113,7 @@ public class Client extends Application {
 							
 							
 							GsonItem item = gson.fromJson(l[1], GsonItem.class);
-							
-							//GsonItem ja = new Item(item);
-							
+														
 							Platform.runLater(() -> {
 								auction.getItems().add(item);
 
@@ -128,7 +125,6 @@ public class Client extends Application {
 
 							String m = l[1];
 							Platform.runLater(()->{
-						    //modify your javafx app here.
 							responseTest.setText(m);
 							
 							//auction.getItems().add(new Item("yoo","Hardly used",50,100,1000,"One bid placed"));
@@ -142,7 +138,6 @@ public class Client extends Application {
 						case "Update" :
 							String updater = l[1];
 								GsonItem updateItem = gson.fromJson(updater, GsonItem.class);
-//								auction.getItems().set(0, real);
 								
 									for(GsonItem v : auction.getItems()) {
 										if(v.getName().equals(updateItem.getName())) {
@@ -151,10 +146,6 @@ public class Client extends Application {
 											System.out.println(v.toString());
 											synchronized(this) {
 												Platform.runLater(() -> {
-//													String up;
-//													up = updateItem.getBidHistory();
-//													v.setBidHistory(up);
-													//responseTest.setText(up);
 												});
 											}
 
@@ -162,22 +153,13 @@ public class Client extends Application {
 
 											v.setCurrBid(updateItem.getCurrBid());
 											
-											//v.setBidHistory(real.bidHistory.getText());
 											auction.refresh();
-											// TODO: find method for updating BidHistory in real-time
 											
 											
 
 									}
 								}
 
-								
-								
-//			
-//				            	auction.getItems().removeAll(auction.getSelectionModel().getSelectedItem());
-//								auction.getItems().add(real);
-
-				            	//auction.refresh();
 							break;
 
 
@@ -334,7 +316,7 @@ public class Client extends Application {
 		v.getChildren().add(responseTest);
 		buttonHBox.getChildren().addAll(sender,placeBid);
 		v.getChildren().add(buttonHBox);
-		Scene s = new Scene(v,600,500);
+		Scene s = new Scene(v,1000,500);
 		
 	    primaryStage.setOnCloseRequest(e -> System.exit(0));
 
@@ -346,8 +328,13 @@ public class Client extends Application {
         currBid.prefWidthProperty().bind(auction.widthProperty().multiply(0.1));
         timer.prefWidthProperty().bind(auction.widthProperty().multiply(0.1));
         bidHistory.prefWidthProperty().bind(auction.widthProperty().multiply(0.2));
-
-
+        
+        
+        for (TableColumn<GsonItem, ?> column : auction.getColumns()) {
+            addTooltipToColumnCells(column);
+        }
+        
+        placeBid.setTooltip(new Tooltip("bruhhh"));
 
         item.setResizable(false);
         description.setResizable(false);
@@ -374,6 +361,24 @@ public class Client extends Application {
     	mediaPlayer.setVolume(.1);
     	mediaPlayer.play();
     	
+    }
+    
+    private <T> void addTooltipToColumnCells(TableColumn<GsonItem,T> column) {
+
+        Callback<TableColumn<GsonItem, T>, TableCell<GsonItem,T>> existingCellFactory 
+            = column.getCellFactory();
+
+        column.setCellFactory(c -> {
+            TableCell<GsonItem, T> cell = existingCellFactory.call(c);
+
+            Tooltip tooltip = new Tooltip();
+            // can use arbitrary binding here to make text depend on cell
+            // in any way you need:
+            tooltip.textProperty().bind(cell.itemProperty().asString());
+
+            cell.setTooltip(tooltip);
+            return cell ;
+        });
     }
 	
 

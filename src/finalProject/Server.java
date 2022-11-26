@@ -183,7 +183,7 @@ public class Server {
 								if( j.getCurrBid()> item.getCurrBid()) {
 									item.setCurrBid(j.getCurrBid());
 									System.out.println("Bid Made for " + j.getName() + ": " + j.getCurrBid());
-									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + ": " + j.getCurrBid() + " | "));
+									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + ": " + j.getCurrBid() + "\n"));
 									String msg = gson.toJson(item);
 									updateAuction("Update -> " + msg);
 								}
