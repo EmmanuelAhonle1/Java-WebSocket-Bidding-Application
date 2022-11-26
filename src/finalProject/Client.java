@@ -43,13 +43,16 @@ public class Client extends Application {
 	private BufferedReader reader;
 	private PrintWriter writer;
 	
-	Item testing;
+	GsonItem testing;
 	Item real;
 	
 	private Label responseTest = new Label();
-	TableView<Item> auction = new TableView();
-	TableColumn item;
-	Item table;
+	TableView<GsonItem> auction = new TableView();
+	//TableColumn item;
+	//TableColumn description;
+	
+	
+	GsonItem table;
 	
 	Boolean initialized = false;
 	
@@ -112,14 +115,14 @@ public class Client extends Application {
 							
 							GsonItem item = gson.fromJson(l[1], GsonItem.class);
 							
-							Item ja = new Item(item);
+							//GsonItem ja = new Item(item);
 							
 							Platform.runLater(() -> {
-								auction.getItems().add(ja);
+								auction.getItems().add(item);
 
 							});
 							
-							System.out.println("yup");
+							System.out.println("Initializing: " + l[1]);
 							break;
 						case "Message" :
 
@@ -138,23 +141,33 @@ public class Client extends Application {
 						
 						case "Update" :
 							String updater = l[1];
-							    //modify your javafx app here.
 								GsonItem updateItem = gson.fromJson(updater, GsonItem.class);
-								real = new Item(updateItem);
 //								auction.getItems().set(0, real);
 								
-								synchronized(this) {
-									for(Item v : auction.getItems()) {
-										if(v.getName().equals(real.getName())) {
-											Thread.sleep(100);
-											v.setCurrBid(real.currBid);
+									for(GsonItem v : auction.getItems()) {
+										if(v.getName().equals(updateItem.getName())) {
+											
+											v.setBidHistory(updateItem.getBidHistory());
+											System.out.println(v.toString());
+											synchronized(this) {
+												Platform.runLater(() -> {
+//													String up;
+//													up = updateItem.getBidHistory();
+//													v.setBidHistory(up);
+													//responseTest.setText(up);
+												});
+											}
+
+
+
+											v.setCurrBid(updateItem.getCurrBid());
+											
 											//v.setBidHistory(real.bidHistory.getText());
-											v.bidHistory.setText(real.bidHistory.getText());
 											auction.refresh();
 											// TODO: find method for updating BidHistory in real-time
 											
 											
-										}
+
 									}
 								}
 
@@ -180,9 +193,6 @@ public class Client extends Application {
 			} catch (IOException ex) {
 				System.out.println("Server has been closed");
 				//ex.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 		
@@ -191,7 +201,6 @@ public class Client extends Application {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// TODO Auto-generated method stub
 		setUpNetworking();
 		
 
@@ -205,7 +214,7 @@ public class Client extends Application {
 		
 		auction.setEditable(true);
 		
-		item = new TableColumn("Item");
+		TableColumn item = new TableColumn("Item");
 		item.setCellValueFactory(new PropertyValueFactory<>("name"));
 
 		TableColumn description = new TableColumn("Description");
@@ -224,47 +233,30 @@ public class Client extends Application {
 		TableColumn bidHistory = new TableColumn("Bid History");
 		bidHistory.setCellValueFactory(new PropertyValueFactory<>("bidHistory"));
 		
-		
-        TableColumn lastNameCol = new TableColumn("Last Name");
-        lastNameCol.setMinWidth(100);
-        lastNameCol.setCellValueFactory(
-            new PropertyValueFactory<Item, String>("name"));
-        lastNameCol.setCellFactory(TextFieldTableCell.forTableColumn());
-        lastNameCol.setOnEditCommit(
-            new EventHandler<CellEditEvent<Item, String>>() {
-                @Override
-                public void handle(CellEditEvent<Item, String> t) {
-                    ((Item) t.getTableView().getItems().get(
-                        t.getTablePosition().getRow())
-                        ).setBidHistory(t.getNewValue());
-                }
-            }
-        );
+
         
         currBid.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        currBid.setOnEditCommit(new EventHandler<CellEditEvent<Item,Double>>(){
+        currBid.setOnEditCommit(new EventHandler<CellEditEvent<GsonItem,Double>>(){
 
 			@Override
-			public void handle(CellEditEvent<Item, Double> t) {
-				// TODO Auto-generated method stub
-              ((Item) t.getTableView().getItems().get(
+			public void handle(CellEditEvent<GsonItem, Double> t) {
+              ((GsonItem) t.getTableView().getItems().get(
               t.getTablePosition().getRow())
               ).setCurrBid(t.getNewValue());
 			}
         	
         });
         
-//        bidHistory.setOnEditCommit(new EventHandler<CellEditEvent<Item,String>>(){
-//
-//			@Override
-//			public void handle(CellEditEvent<Item, String> t) {
-//				// TODO Auto-generated method stub
-//              ((Item) t.getTableView().getItems().get(
-//              t.getTablePosition().getRow())
-//              ).setBidHistory(t.getNewValue());
-//			}
-//        	
-//        });
+        bidHistory.setOnEditCommit(new EventHandler<CellEditEvent<Item,String>>(){
+
+			@Override
+			public void handle(CellEditEvent<Item, String> t) {
+              ((Item) t.getTableView().getItems().get(
+              t.getTablePosition().getRow())
+              ).setBidHistory(t.getNewValue());
+			}
+        	
+        });
         
             
             
@@ -273,14 +265,13 @@ public class Client extends Application {
 		auction.getColumns().addAll(item,description,currBid,buyNow,timer,bidHistory);
 		
 		
-		table = new Item("table","Hardly used",50,100,1000,"One bid placed");
+		table = new GsonItem("filler","",50,100,1000,"");
 		
 		auction.getItems().add(table);
-		auction.getItems().add(new Item("yoo","Hardly used",50,100,1000,"One bid placed"));
 		
-		Item obj = auction.getItems().get(0);
+		GsonItem obj = auction.getItems().get(0);
 		
-		obj.bidHistory.setText("Whaoooooo");
+		obj.setBidHistory("Whaoooooo");
 		
 		Button sender = new Button("Send");
 		
@@ -296,10 +287,10 @@ public class Client extends Application {
     			Gson gson = builder.create();
     			testing = auction.getSelectionModel().getSelectedItem();
     			
-    			GsonItem convert = new GsonItem(testing);
+    			//GsonItem convert = new GsonItem(testing);
     			
     			
-    			String string = gson.toJson(convert);
+    			String string = gson.toJson(testing);
     			
     			sendToServer("Message -> " + string);
     			
@@ -324,10 +315,10 @@ public class Client extends Application {
     			Gson gson = builder.create();
     			testing = auction.getSelectionModel().getSelectedItem();
     			
-    			GsonItem convert = new GsonItem(testing);
+    			//GsonItem convert = new GsonItem(testing);
     			
     			
-    			String string = gson.toJson(convert);
+    			String string = gson.toJson(testing);
     			
     			sendToServer("Bid Request -> " + string);
     			
@@ -369,7 +360,6 @@ public class Client extends Application {
 	}
 	
 	private void sendToServer(String string) {
-		// TODO Auto-generated method stub
 	    System.out.println("Sending to server: " + string);
 	    writer.println(string);
 	    writer.flush();

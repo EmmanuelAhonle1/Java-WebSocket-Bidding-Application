@@ -57,7 +57,7 @@ public class Server {
 	
 
 	private void setUpNetworking() throws Exception {
-		//timerInit();
+		timerInit();
 		clientOutputStreams = new ArrayList<PrintWriter>();
 		@SuppressWarnings("resource")
 		ServerSocket serverSock = new ServerSocket(4243);
@@ -179,13 +179,13 @@ public class Server {
 						Gson gson = new Gson();
 						GsonItem j = gson.fromJson(parsedMsg[1], GsonItem.class);
 						for(GsonItem item : tb) {
-							if(item.name.equals(j.name)) {
-								if( j.currBid> item.currBid) {
-									item.currBid = j.currBid;
-									System.out.println("Bid Made for " + j.name + ": " + j.currBid);
-									item.bidHistory += ("Bid Made for " + j.name + ": " + j.currBid + " | ");
-									
-									updateAuction("Update -> " + parsedMsg[1]);
+							if(item.getName().equals(j.getName())) {
+								if( j.getCurrBid()> item.getCurrBid()) {
+									item.setCurrBid(j.getCurrBid());
+									System.out.println("Bid Made for " + j.getName() + ": " + j.getCurrBid());
+									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + ": " + j.getCurrBid() + " | "));
+									String msg = gson.toJson(item);
+									updateAuction("Update -> " + msg);
 								}
 							}
 
@@ -232,6 +232,7 @@ public class Server {
 	
 	private  void updateAuction(String message) {
 		for (PrintWriter writer : clientOutputStreams) {
+			System.out.println(message);
 			writer.println(message);
 			writer.flush();
 		}
