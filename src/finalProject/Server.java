@@ -18,6 +18,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -39,7 +40,7 @@ public class Server {
 	String currentTime;
 	
 	private static Boolean debug = false;
-	
+	private static ArrayList<Users> allUsers = new ArrayList<Users>();
 	
 	public static void main(String[] args) {
 		try {
@@ -47,8 +48,10 @@ public class Server {
 			
 		
 			
-			//initializeItems();
-			initializeItems2();
+			initializeItems();
+			
+			initializeLogins();
+			
 			new Server().setUpNetworking();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -81,13 +84,13 @@ public class Server {
 
 	}
 	
-	private static void initializeItems() {
+	private static void initializeItems2() {
 		GsonItem change = new GsonItem("yesiirrr","Hardly used",50,100,1000,"One bid placed");
 		tb.add(change);
 		tb.add(new GsonItem("bruhhhh","Hardly used",50,100,1000,"One bid placed"));
 	}
 	
-	private static void initializeItems2() {
+	private static void initializeItems() {
 		try {
 			Scanner o = new Scanner(new File("input.txt"));
 			String name;
@@ -102,7 +105,8 @@ public class Server {
 			while(o.hasNextLine()) {
 				
 				
-					name = o.nextLine();
+					name = o.next();
+					o.nextLine();
 					description = o.nextLine();
 					currBid = o.nextDouble();
 					buyNow = o.nextDouble();
@@ -120,6 +124,32 @@ public class Server {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private static void initializeLogins() {
+		String username;
+		String password;
+		
+		try {
+			Scanner o = new Scanner(new File("users.txt"));
+			
+			while(o.hasNextLine()) {
+				if(o.next().equals("Username:")) {
+					username = o.next();
+					if(o.next().equals("Password:")) {
+						password = o.next();
+						allUsers.add(new Users(username,password));
+					}
+					
+					
+				}
+				o.nextLine();
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	private void notifyClients(String message) {
@@ -143,6 +173,22 @@ public class Server {
 		
 
 	}
+	
+	private void loginAttempt(Users possibleUser) {
+		for(Users user : allUsers) {
+			if(user.getUser().equals(possibleUser.getUser()) && user.getPass().equals(possibleUser.getPass())) {
+				PrintWriter writer = clientOutputStreams.get(clientOutputStreams.size()-1);
+				GsonBuilder builder = new GsonBuilder();
+				Gson gson = builder.create();
+				
+				String valid = gson.toJson(possibleUser);
+				System.out.println("Login Successful: " + possibleUser.getUser());
+				writer.println("Valid Login -> " + valid);
+				writer.flush();
+				
+			}
+		}
+	}
 
 	class ClientHandler implements Runnable {
 		private BufferedReader reader;
@@ -159,10 +205,20 @@ public class Server {
 				while ((message = reader.readLine()) != null) {
 					
 					String [] parsedMsg = message.split(" -> ");
-					System.out.println("read " + message);
-
+					System.out.println(message);
+	    			GsonBuilder builder = new GsonBuilder();
+	    			Gson gson = builder.create();
 				
 					switch(parsedMsg[0]) {
+					
+					case "Login Request" :
+						Users possibleUser = gson.fromJson(parsedMsg[1], Users.class);
+						loginAttempt(possibleUser);
+						break;
+						
+					case "Logout Request" :
+						System.out.println("Logging out: " + parsedMsg[1]);
+						break;
 						
 					case "Message" :
 						notifyClients(message);
@@ -176,14 +232,14 @@ public class Server {
 						break;
 						
 					case "Bid Request" :
-						Gson gson = new Gson();
+						gson = new Gson();
 						GsonItem j = gson.fromJson(parsedMsg[1], GsonItem.class);
 						for(GsonItem item : tb) {
 							if(item.getName().equals(j.getName())) {
 								if( j.getCurrBid()> item.getCurrBid()) {
 									item.setCurrBid(j.getCurrBid());
-									System.out.println("Bid Made for " + j.getName() + ": " + j.getCurrBid());
-									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + ": " + j.getCurrBid() + "\n"));
+									System.out.println("Bid Made for " + j.getName() + " by " + parsedMsg[2] + ": " + j.getCurrBid());
+									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + " by " + parsedMsg[2] +  ": " + j.getCurrBid() + "\n"));
 									String msg = gson.toJson(item);
 									updateAuction("Update -> " + msg);
 								}

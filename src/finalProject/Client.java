@@ -13,10 +13,14 @@ import com.google.gson.GsonBuilder;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.TableColumn.CellEditEvent;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
@@ -43,18 +47,20 @@ public class Client extends Application {
 	private BufferedReader reader;
 	private PrintWriter writer;
 	
-	GsonItem testing;
-	Item real;
+	private Stage primaryStage;
+	
+	private Scene s;
+	
+	private GsonItem testing;
+	private Item real;
 	
 	private Label responseTest = new Label();
-	TableView<GsonItem> auction = new TableView();
-	//TableColumn item;
-	//TableColumn description;
+	private TableView<GsonItem> auction = new TableView();
 	
 	
-	GsonItem table;
-	
-	Boolean initialized = false;
+	private GsonItem table;
+	private Users logger;
+	private Label loginOutput;
 	
 	public void run(String[] args) throws Exception {
 		launch(args);
@@ -86,9 +92,12 @@ public class Client extends Application {
 		try {
 			new Client().run(args);
 
-		} catch (Exception e) {
+		} 	catch(NumberFormatException nfe) {
+			System.out.println("oopsie");
+		}	catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	class IncomingReader implements Runnable {
@@ -148,29 +157,38 @@ public class Client extends Application {
 												Platform.runLater(() -> {
 												});
 											}
-
-
-
 											v.setCurrBid(updateItem.getCurrBid());
 											
 											auction.refresh();
-											
-											
-
 									}
 								}
 
 							break;
+						
+						case "Valid Login" :
+							Users sub = gson.fromJson(l[1], Users.class);
+							System.out.println("Login succeeded for " + sub.getUser());
+							Platform.runLater(() -> {
+								try {
+									loginOutput.setText("Logging in as " + sub.getUser() + "...");
+									Thread.sleep(1000);
+									writer.println("Initialize");
+									writer.flush();
+									auctionScene();
 
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								
+							});
+
+						
+						break;
 
 					}
 					
-					
-					//System.out.println("Received from Server: " + message);
 
-					
-
-					
 				}
 			} catch (IOException ex) {
 				System.out.println("Server has been closed");
@@ -186,7 +204,125 @@ public class Client extends Application {
 		setUpNetworking();
 		
 
+		this.primaryStage = primaryStage;
 
+		loginScene(this.primaryStage);
+	}
+	
+	private void sendToServer(String string) {
+	    System.out.println("Sending to server: " + string);
+	    writer.println(string);
+	    writer.flush();
+	}
+	
+    MediaPlayer mediaPlayer;
+    public void music() {
+    	String s = "drift.wav";
+
+    	Media h = new Media(Paths.get(s).toUri().toString());
+    	mediaPlayer = new MediaPlayer(h);
+    	mediaPlayer.setVolume(.1);
+    	mediaPlayer.play();
+    	
+    }
+    
+    private <T> void addTooltipToColumnCells(TableColumn<GsonItem,T> column) {
+
+        Callback<TableColumn<GsonItem, T>, TableCell<GsonItem,T>> existingCellFactory 
+            = column.getCellFactory();
+
+        column.setCellFactory(c -> {
+            TableCell<GsonItem, T> cell = existingCellFactory.call(c);
+
+            Tooltip tooltip = new Tooltip();
+            // can use arbitrary binding here to make text depend on cell
+            // in any way you need:
+            tooltip.textProperty().bind(cell.itemProperty().asString());
+
+            cell.setTooltip(tooltip);
+            return cell ;
+        });
+    }
+    
+    
+    private void loginScene(Stage primStage) {
+    	
+    	
+
+    	VBox storer = new VBox();
+    	HBox user = new HBox();
+    	HBox pass = new HBox();
+    	
+    	HBox buttons = new HBox();
+    	
+    	storer.setSpacing(10);
+    	user.setSpacing(5);
+    	pass.setSpacing(5);
+    	
+    	buttons.setSpacing(20);
+    	
+    	storer.setAlignment(Pos.CENTER);
+    	user.setAlignment(Pos.CENTER);
+    	pass.setAlignment(Pos.CENTER);
+    	buttons.setAlignment(Pos.CENTER);
+    	
+    	loginOutput = new Label("");
+    	
+    	Label uLabel = new Label("Username:");
+    	Label pLabel = new Label("Password:");
+    	
+    	TextField uTF = new TextField("");
+    	TextField pTF = new TextField("");
+    	
+    	
+    	Button login = new Button("Login");
+        login.setOnAction(new EventHandler<ActionEvent>() {
+       	 
+            @Override
+            public void handle(ActionEvent event) {
+            	
+    			GsonBuilder builder = new GsonBuilder();
+    			Gson gson = builder.create();
+    			
+    			logger = new Users(uTF.getText(),pTF.getText());
+    			
+    			String login = gson.toJson(logger);
+    			
+    			sendToServer("Login Request -> " + login);
+    			
+    			
+    			
+
+    			
+
+
+            } 
+        });
+    	Button guestSign = new Button("Login as Guest");
+    	
+    	user.getChildren().addAll(uLabel,uTF);
+    	pass.getChildren().addAll(pLabel,pTF);
+    	buttons.getChildren().addAll(login,guestSign);
+    	
+    	storer.getChildren().addAll(user,pass,loginOutput,buttons);
+    	
+    	uTF.requestFocus();
+	    primaryStage.setOnCloseRequest(e -> {
+	    	System.exit(0);
+	    });
+
+    	
+    	
+    	
+    	Scene loginScene = new Scene(storer,300,150);
+
+    	primStage.setScene(loginScene);
+    	primStage.show();
+    	
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void auctionScene() {
 		VBox v = new VBox(10);
 		HBox buttonHBox = new HBox(10);
 		
@@ -240,20 +376,13 @@ public class Client extends Application {
         	
         });
         
-            
+      
             
 
 		
 		auction.getColumns().addAll(item,description,currBid,buyNow,timer,bidHistory);
 		
 		
-		table = new GsonItem("filler","",50,100,1000,"");
-		
-		auction.getItems().add(table);
-		
-		GsonItem obj = auction.getItems().get(0);
-		
-		obj.setBidHistory("Whaoooooo");
 		
 		Button sender = new Button("Send");
 		
@@ -302,7 +431,7 @@ public class Client extends Application {
     			
     			String string = gson.toJson(testing);
     			
-    			sendToServer("Bid Request -> " + string);
+    			sendToServer("Bid Request -> " + string + " -> " + logger.getUser());
     			
 
     			
@@ -316,9 +445,13 @@ public class Client extends Application {
 		v.getChildren().add(responseTest);
 		buttonHBox.getChildren().addAll(sender,placeBid);
 		v.getChildren().add(buttonHBox);
-		Scene s = new Scene(v,1000,500);
+		s = new Scene(v,1000,500);
 		
-	    primaryStage.setOnCloseRequest(e -> System.exit(0));
+	    primaryStage.setOnCloseRequest(e -> {
+	    	writer.println("Logout Request -> " + logger.getUser());
+	    	writer.flush();
+	    	System.exit(0);
+	    	});
 
 	    
         item.prefWidthProperty().bind(auction.widthProperty().multiply(0.2));
@@ -334,51 +467,12 @@ public class Client extends Application {
             addTooltipToColumnCells(column);
         }
         
-        placeBid.setTooltip(new Tooltip("bruhhh"));
-
         item.setResizable(false);
         description.setResizable(false);
 		
         //music();
 		primaryStage.setScene(s);
-		primaryStage.show();
-		writer.println("Initialize");
-		writer.flush();
-	}
-	
-	private void sendToServer(String string) {
-	    System.out.println("Sending to server: " + string);
-	    writer.println(string);
-	    writer.flush();
-	}
-	
-    MediaPlayer mediaPlayer;
-    public void music() {
-    	String s = "drift.wav";
-
-    	Media h = new Media(Paths.get(s).toUri().toString());
-    	mediaPlayer = new MediaPlayer(h);
-    	mediaPlayer.setVolume(.1);
-    	mediaPlayer.play();
-    	
-    }
-    
-    private <T> void addTooltipToColumnCells(TableColumn<GsonItem,T> column) {
-
-        Callback<TableColumn<GsonItem, T>, TableCell<GsonItem,T>> existingCellFactory 
-            = column.getCellFactory();
-
-        column.setCellFactory(c -> {
-            TableCell<GsonItem, T> cell = existingCellFactory.call(c);
-
-            Tooltip tooltip = new Tooltip();
-            // can use arbitrary binding here to make text depend on cell
-            // in any way you need:
-            tooltip.textProperty().bind(cell.itemProperty().asString());
-
-            cell.setTooltip(tooltip);
-            return cell ;
-        });
+		
     }
 	
 
