@@ -30,7 +30,7 @@ public class Item {
 		this.description = g.getDescription();
 		this.currBid = g.getCurrBid();
 		this.buyNow = g.getBuyNow();
-		this.timer = g.getTimer();
+		this.timer = Integer.parseInt(g.getTimer());
 		this.bidHistory = new TextField(g.getBidHistory());
 		this.bidHistory.setEditable(true);
 	}

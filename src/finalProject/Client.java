@@ -1,5 +1,6 @@
 package finalProject;
 
+import java.awt.Color;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -26,24 +28,23 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.beans.property.*;
-import java.awt.*;
-import java.awt.event.*;
 
 import javafx.scene.control.*;
 
 
 public class Client extends Application {
-	private JTextArea incoming;
-	private JTextField outgoing;
 	private BufferedReader reader;
 	private PrintWriter writer;
 	
@@ -52,15 +53,27 @@ public class Client extends Application {
 	private Scene s;
 	
 	private GsonItem testing;
-	private Item real;
 	
 	private Label responseTest = new Label();
 	private TableView<GsonItem> auction = new TableView();
 	
 	
-	private GsonItem table;
+	private TableColumn timer;
+	
 	private Users logger;
 	private Label loginOutput;
+	
+	public static void main(String[] args) {
+		try {
+			new Client().run(args);
+
+		} 	catch(NumberFormatException nfe) {
+			System.out.println("oopsie");
+		}	catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 	
 	public void run(String[] args) throws Exception {
 		launch(args);
@@ -79,26 +92,7 @@ public class Client extends Application {
 		readerThread.start();
 	}
 
-	class SendButtonListener implements ActionListener {
-		public void actionPerformed(java.awt.event.ActionEvent ev) {
-			writer.println(outgoing.getText());
-			writer.flush();
-			outgoing.setText("");
-			outgoing.requestFocus();
-		}
-	}
 
-	public static void main(String[] args) {
-		try {
-			new Client().run(args);
-
-		} 	catch(NumberFormatException nfe) {
-			System.out.println("oopsie");
-		}	catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
 
 	class IncomingReader implements Runnable {
 		public void run() {
@@ -144,7 +138,7 @@ public class Client extends Application {
 							});
 							break;
 						
-						case "Update" :
+						case "Valid Bid" :
 							String updater = l[1];
 								GsonItem updateItem = gson.fromJson(updater, GsonItem.class);
 								
@@ -169,22 +163,56 @@ public class Client extends Application {
 							Users sub = gson.fromJson(l[1], Users.class);
 							System.out.println("Login succeeded for " + sub.getUser());
 							Platform.runLater(() -> {
-								try {
-									loginOutput.setText("Logging in as " + sub.getUser() + "...");
-									Thread.sleep(1000);
+								loginOutput.setText("Logging in as " + sub.getUser() + "...");
+								music("login.mp3");
+								delay(500, () -> {
 									writer.println("Initialize");
 									writer.flush();
 									auctionScene();
-
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+								});
+		
 								
 							});
 
 						
-						break;
+							break;
+						
+						case "Winners" :
+							updater = l[1];
+							updateItem = gson.fromJson(updater, GsonItem.class);
+							
+								for(GsonItem v : auction.getItems()) {
+									if(v.getName().equals(updateItem.getName())) {
+										
+										v.setBidHistory(updateItem.getBidHistory());
+										System.out.println(v.toString());
+											Platform.runLater(() -> {
+											});
+										v.setCurrBid(updateItem.getCurrBid());
+										
+										
+										
+										
+										
+										auction.refresh();
+								}
+							}
+							break;
+							
+						
+						case "Timer" :
+							String timer = l[1];
+							System.out.println(timer);
+							
+							Platform.runLater(() -> {
+								responseTest.setTextFill(Paint.valueOf("red"));
+								responseTest.setText("Auction Time Remaining: " + timer);
+//								for(GsonItem g : auction.getItems()) {
+//									g.setTimer(timer);
+//								}
+							});
+							//auction.refresh();
+							break;
 
 					}
 					
@@ -192,7 +220,6 @@ public class Client extends Application {
 				}
 			} catch (IOException ex) {
 				System.out.println("Server has been closed");
-				//ex.printStackTrace();
 			}
 		}
 		
@@ -216,13 +243,23 @@ public class Client extends Application {
 	}
 	
     MediaPlayer mediaPlayer;
-    public void music() {
-    	String s = "drift.wav";
+    public void music(String file) {
 
-    	Media h = new Media(Paths.get(s).toUri().toString());
+    	Media h = new Media(Paths.get(file).toUri().toString());
     	mediaPlayer = new MediaPlayer(h);
-    	mediaPlayer.setVolume(.1);
+    	mediaPlayer.setVolume(.2);
     	mediaPlayer.play();
+    	
+    }
+    
+    MediaPlayer backgroundMediaPlayer;
+    public void backgroundMusic(String file) {
+
+    	Media h = new Media(Paths.get(file).toUri().toString());
+    	backgroundMediaPlayer = new MediaPlayer(h);
+    	backgroundMediaPlayer.setVolume(.1);
+    	backgroundMediaPlayer.play();
+    	backgroundMediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
     	
     }
     
@@ -268,11 +305,16 @@ public class Client extends Application {
     	
     	loginOutput = new Label("");
     	
+    	Label loginTitle = new Label("Login");
+    	
+    	loginTitle.setFont(Font.font("Verdana", 30));
+    	
+    	
     	Label uLabel = new Label("Username:");
     	Label pLabel = new Label("Password:");
     	
     	TextField uTF = new TextField("");
-    	TextField pTF = new TextField("");
+    	PasswordField pTF = new PasswordField();
     	
     	
     	Button login = new Button("Login");
@@ -289,8 +331,25 @@ public class Client extends Application {
     			String login = gson.toJson(logger);
     			
     			sendToServer("Login Request -> " + login);
+            } 
+        });
+        
+        
+    	Button guestSign = new Button("Login as Guest");
+        guestSign.setOnAction(new EventHandler<ActionEvent>() {
+       	 
+            @Override
+            public void handle(ActionEvent event) {
+            	
+    			GsonBuilder builder = new GsonBuilder();
+    			Gson gson = builder.create();
+    			
+    			logger = new Users("guest","");
     			
     			
+    			String string = gson.toJson(logger);
+    			
+    			sendToServer("Login Request -> " + string);
     			
 
     			
@@ -298,13 +357,13 @@ public class Client extends Application {
 
             } 
         });
-    	Button guestSign = new Button("Login as Guest");
+        
     	
     	user.getChildren().addAll(uLabel,uTF);
     	pass.getChildren().addAll(pLabel,pTF);
     	buttons.getChildren().addAll(login,guestSign);
     	
-    	storer.getChildren().addAll(user,pass,loginOutput,buttons);
+    	storer.getChildren().addAll(loginTitle,user,pass,loginOutput,buttons);
     	
     	uTF.requestFocus();
 	    primaryStage.setOnCloseRequest(e -> {
@@ -314,7 +373,7 @@ public class Client extends Application {
     	
     	
     	
-    	Scene loginScene = new Scene(storer,300,150);
+    	Scene loginScene = new Scene(storer,300,300);
 
     	primStage.setScene(loginScene);
     	primStage.show();
@@ -326,7 +385,11 @@ public class Client extends Application {
 		VBox v = new VBox(10);
 		HBox buttonHBox = new HBox(10);
 		
+		
+		buttonHBox.setAlignment(Pos.CENTER);
+		
 		responseTest = new Label("");
+		responseTest.setAlignment(Pos.CENTER);
 		
 		auction = new TableView();
 		
@@ -338,14 +401,14 @@ public class Client extends Application {
 		TableColumn description = new TableColumn("Description");
 		description.setCellValueFactory(new PropertyValueFactory<>("description"));
 
-		TableColumn currBid = new TableColumn("Current Bid");
+		TableColumn currBid = new TableColumn("Current Bid ($)");
 		currBid.setCellValueFactory(new PropertyValueFactory<>("currBid"));
 
 
 		TableColumn buyNow = new TableColumn("Buy Now");
 		buyNow.setCellValueFactory(new PropertyValueFactory<>("buyNow"));
 
-		TableColumn timer = new TableColumn("Timer");
+		timer = new TableColumn("Bid Time Left");
 		timer.setCellValueFactory(new PropertyValueFactory<>("timer"));
 		
 		TableColumn bidHistory = new TableColumn("Bid History");
@@ -380,8 +443,7 @@ public class Client extends Application {
             
 
 		
-		auction.getColumns().addAll(item,description,currBid,buyNow,timer,bidHistory);
-		
+		auction.getColumns().addAll(item,description,currBid,buyNow,bidHistory);
 		
 		
 		Button sender = new Button("Send");
@@ -404,8 +466,8 @@ public class Client extends Application {
     			String string = gson.toJson(testing);
     			
     			sendToServer("Message -> " + string);
-    			
 				auction.refresh();
+				
 
     			
 
@@ -432,26 +494,28 @@ public class Client extends Application {
     			String string = gson.toJson(testing);
     			
     			sendToServer("Bid Request -> " + string + " -> " + logger.getUser());
-    			
-
-    			
-
 
             } 
         });
-		
-
-		v.getChildren().add(auction);
-		v.getChildren().add(responseTest);
-		buttonHBox.getChildren().addAll(sender,placeBid);
-		v.getChildren().add(buttonHBox);
-		s = new Scene(v,1000,500);
+        
+        HBox rem = new HBox(responseTest);
+        rem.setAlignment(Pos.CENTER);
+        
+        
+	    Label title = new Label("Auction House :D");
+	    title.setFont(Font.font("Cambria", 32));
+	
+		buttonHBox.getChildren().addAll(placeBid);
+        v.getChildren().addAll(title,auction,rem,buttonHBox);
+        v.setAlignment(Pos.CENTER);
+		s = new Scene(v,1000,530);
 		
 	    primaryStage.setOnCloseRequest(e -> {
 	    	writer.println("Logout Request -> " + logger.getUser());
 	    	writer.flush();
 	    	System.exit(0);
 	    	});
+	    
 
 	    
         item.prefWidthProperty().bind(auction.widthProperty().multiply(0.2));
@@ -460,7 +524,7 @@ public class Client extends Application {
         buyNow.prefWidthProperty().bind(auction.widthProperty().multiply(0.1));
         currBid.prefWidthProperty().bind(auction.widthProperty().multiply(0.1));
         timer.prefWidthProperty().bind(auction.widthProperty().multiply(0.1));
-        bidHistory.prefWidthProperty().bind(auction.widthProperty().multiply(0.2));
+        bidHistory.prefWidthProperty().bind(auction.widthProperty().multiply(0.3));
         
         
         for (TableColumn<GsonItem, ?> column : auction.getColumns()) {
@@ -469,12 +533,31 @@ public class Client extends Application {
         
         item.setResizable(false);
         description.setResizable(false);
+        currBid.setResizable(false);
+        buyNow.setResizable(false);
+        currBid.setResizable(false);
+        timer.setResizable(false);
+        bidHistory.setResizable(false);
+        
+        primaryStage.setTitle("Logged in as: " + logger.getUser());
 		
-        //music();
+        backgroundMusic("elevator.wav");
 		primaryStage.setScene(s);
 		
     }
 	
+    public static void delay(long millis, Runnable continuation) {
+        Task<Void> sleeper = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                try { Thread.sleep(millis); }
+                catch (InterruptedException e) { }
+                return null;
+            }
+        };
+        sleeper.setOnSucceeded(event -> continuation.run());
+        new Thread(sleeper).start();
+      }
 
 }
 

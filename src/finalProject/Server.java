@@ -27,11 +27,11 @@ import javafx.scene.control.TextField;
 
 
 public class Server {
-	private ArrayList<PrintWriter> clientOutputStreams;
+	private static ArrayList<PrintWriter> clientOutputStreams;
 	
 	
 	static Timer timer;
-	private static int counter = 0;
+	private static int counter;
 	
 	private static String fileInput;
 	
@@ -44,9 +44,9 @@ public class Server {
 	
 	public static void main(String[] args) {
 		try {
-			debugMode();
+			//debugMode();
 			
-		
+			setTimer(03,00);
 			
 			initializeItems();
 			
@@ -58,6 +58,12 @@ public class Server {
 		}
 	}
 	
+
+	private static void setTimer(int min, int sec) {
+		// TODO Auto-generated method stub
+		counter = (min * 60) + sec%60;
+	}
+
 
 	private void setUpNetworking() throws Exception {
 		timerInit();
@@ -84,11 +90,6 @@ public class Server {
 
 	}
 	
-	private static void initializeItems2() {
-		GsonItem change = new GsonItem("yesiirrr","Hardly used",50,100,1000,"One bid placed");
-		tb.add(change);
-		tb.add(new GsonItem("bruhhhh","Hardly used",50,100,1000,"One bid placed"));
-	}
 	
 	private static void initializeItems() {
 		try {
@@ -97,7 +98,7 @@ public class Server {
 			String description;
 			double currBid;
 			double buyNow;
-			int timer;
+			String timer;
 			String bidHistory;
 			
 			
@@ -110,7 +111,7 @@ public class Server {
 					description = o.nextLine();
 					currBid = o.nextDouble();
 					buyNow = o.nextDouble();
-					timer = o.nextInt();
+					timer = o.next();
 					bidHistory = o.nextLine();
 					tb.add(new GsonItem(name,description,currBid,buyNow,timer,bidHistory));
 					if(o.hasNextLine()) {
@@ -175,6 +176,15 @@ public class Server {
 	}
 	
 	private void loginAttempt(Users possibleUser) {
+		if(possibleUser.getUser().equals("guest") && possibleUser.getPass().equals("d41d8cd98f00b204e9800998ecf8427e")) {
+			PrintWriter writer = clientOutputStreams.get(clientOutputStreams.size()-1);
+			GsonBuilder builder = new GsonBuilder();
+			Gson gson = builder.create();
+			String valid = gson.toJson(possibleUser);
+			System.out.println("Login Successful: " + possibleUser.getUser());
+			writer.println("Valid Login -> " + valid);
+			writer.flush();
+		}
 		for(Users user : allUsers) {
 			if(user.getUser().equals(possibleUser.getUser()) && user.getPass().equals(possibleUser.getPass())) {
 				PrintWriter writer = clientOutputStreams.get(clientOutputStreams.size()-1);
@@ -237,15 +247,19 @@ public class Server {
 						for(GsonItem item : tb) {
 							if(item.getName().equals(j.getName())) {
 								if( j.getCurrBid()> item.getCurrBid()) {
+									
+									String user = parsedMsg[2];
 									item.setCurrBid(j.getCurrBid());
-									System.out.println("Bid Made for " + j.getName() + " by " + parsedMsg[2] + ": " + j.getCurrBid());
-									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + " by " + parsedMsg[2] +  ": " + j.getCurrBid() + "\n"));
+									item.setWinningBidder(user);
+									System.out.println("Bid Made for " + j.getName() + " by " + user + ": " + j.getCurrBid());
+									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + " by " + user +  ": " + j.getCurrBid() + "\n"));
 									String msg = gson.toJson(item);
-									updateAuction("Update -> " + msg);
+									updateAuction("Valid Bid -> " + msg);
 								}
 							}
 
 						}
+						
 						
 					}
 					
@@ -269,14 +283,29 @@ public class Server {
 		    public void run() {  
 		        //System.out.println("Task Timer on Fixed Rate");
 		        //System.out.println(counter++);
-		    	counter++;
+		    	
+		    	if(counter>=1) {
+			    	counter--;
+		    	}
 		        String time = String.format("[%02d:%02d]", counter / 60, counter % 60);
 		        System.out.println(time);
-		        if(time.equals("[00:04]") && !debug) {
+		        
+		        updateCountdown(time);
+		        if(time.equals("[00:00]") && !debug) {
+		        	winningBid();
 		        	System.out.println("Server Closing...");
 		        	System.exit(0);
 		        }
-		    };  
+		    }
+
+			private void updateCountdown(String message) {
+				// TODO Auto-generated method stub
+				for(PrintWriter writer : clientOutputStreams) {
+					//System.out.println("Timer -> " + message);
+					writer.println("Timer -> " + message);
+					writer.flush();
+				}
+			};  
 		};  
 		timer.scheduleAtFixedRate(tt,0,1000); 
 
@@ -291,6 +320,27 @@ public class Server {
 			System.out.println(message);
 			writer.println(message);
 			writer.flush();
+		}
+	}
+	
+	private static void winningBid() {
+		System.out.println("Final Bid Results Sent...");
+
+		for(GsonItem item : tb) {
+			String def = "No one";
+			if(item.getWinningBidder() != null) {
+				def = item.getWinningBidder();
+			}
+			item.setBidHistory(item.getBidHistory() + def + " has won " + item.getName() + "\n");
+
+		for (PrintWriter writer : clientOutputStreams) {
+
+				String converted = item.toString();
+				System.out.println("Winners -> " + converted);
+				writer.println("Winners -> " + converted);
+				writer.flush();
+			}
+
 		}
 	}
 

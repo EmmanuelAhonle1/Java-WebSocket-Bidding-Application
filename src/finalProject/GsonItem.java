@@ -9,21 +9,13 @@ public class GsonItem {
 	private String description;
 	private double currBid;
 	private double buyNow;
-	private int timer;
+	private String timer;
 	private String bidHistory;
+	private String winningBidder;
 		
-	public GsonItem(Item g) {
-		this.name = g.name;
-		this.description = g.description;
-		this.currBid = g.currBid;
-		this.buyNow = g.buyNow;
-		this.timer = g.timer;
-		this.bidHistory = g.bidHistory.getText();
-		
-		
-	}
+
 	
-	public GsonItem(String name, String description, double currBid, double buyNow, int timer, String bidHistory) {
+	public GsonItem(String name, String description, double currBid, double buyNow, String timer, String bidHistory) {
 		this.name = name;
 		this.description = description;
 		this.currBid = currBid;
@@ -57,7 +49,7 @@ public class GsonItem {
 		return this.buyNow;
 	}
 	
-	public int getTimer() {
+	public String getTimer() {
 		return this.timer;
 	}
 	
@@ -75,6 +67,19 @@ public class GsonItem {
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getWinningBidder() {
+		return this.winningBidder;
+	}
+	
+	public void setWinningBidder(String winningBidder) {
+		this.winningBidder = winningBidder;
+	}
+
+	public void setTimer(String timer2) {
+		// TODO Auto-generated method stub
+		this.timer = timer2;
 	}
 	
 	
