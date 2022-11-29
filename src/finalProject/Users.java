@@ -1,3 +1,13 @@
+
+// Copy-paste this file at the top of every file you turn in.
+/*
+* EE422C Final Project submission by
+* Replace <...> with your actual data.
+* <Emmanuel Ahonle>
+* <eva278>
+* <17610>
+* Fall 2022
+*/
 package finalProject;
 
 import com.google.gson.Gson;
