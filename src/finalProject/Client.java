@@ -25,6 +25,8 @@ import javafx.scene.control.TableColumn.CellEditEvent;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -433,6 +435,39 @@ public class Client extends Application {
     	uTF.requestFocus();
 	    primaryStage.setOnCloseRequest(e -> {
 	    	System.exit(0);
+	    });
+	    
+	    
+	    uTF.setOnKeyPressed(new EventHandler<KeyEvent>() {
+	        @Override
+	        public void handle(KeyEvent ke) {
+	            if (ke.getCode().equals(KeyCode.ENTER)) {
+	    			GsonBuilder builder = new GsonBuilder();
+	    			Gson gson = builder.create();
+	    			
+	    			logger = new Users(uTF.getText(),pTF.getText());
+	    			
+	    			String login = gson.toJson(logger);
+	    			
+	    			sendToServer("Login Request -> " + login);
+	            }
+	        }
+	    });
+	    
+	    pTF.setOnKeyPressed(new EventHandler<KeyEvent>() {
+	        @Override
+	        public void handle(KeyEvent ke) {
+	            if (ke.getCode().equals(KeyCode.ENTER)) {
+	    			GsonBuilder builder = new GsonBuilder();
+	    			Gson gson = builder.create();
+	    			
+	    			logger = new Users(uTF.getText(),pTF.getText());
+	    			
+	    			String login = gson.toJson(logger);
+	    			
+	    			sendToServer("Login Request -> " + login);
+	            }
+	        }
 	    });
 
     	

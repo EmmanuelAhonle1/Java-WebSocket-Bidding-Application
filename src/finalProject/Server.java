@@ -46,7 +46,7 @@ public class Server {
 	
 	private static String fileInput;
 	
-	private static ArrayList<GsonItem> tb = new ArrayList<GsonItem>();
+	private static ArrayList<GsonItem> auctionItems = new ArrayList<GsonItem>();
 	
 	String currentTime;
 	
@@ -126,7 +126,7 @@ public class Server {
 					buyNow = o.nextDouble();
 					timer = o.next();
 					bidHistory = o.nextLine();
-					tb.add(new GsonItem(name,description,currBid,buyNow,timer,bidHistory));
+					auctionItems.add(new GsonItem(name,description,currBid,buyNow,timer,bidHistory));
 					if(o.hasNextLine()) {
 						o.nextLine();
 					}
@@ -178,7 +178,7 @@ public class Server {
 	
 	private void initializeClient() {
 		PrintWriter writer = clientOutputStreams.get(clientOutputStreams.size()-1);
-			for(GsonItem g : tb) {
+			for(GsonItem g : auctionItems) {
 				
 				String daf = g.toString();
 				writer.println("Init -> " + g.toString());
@@ -257,7 +257,7 @@ public class Server {
 					case "Bid Request" :
 						gson = new Gson();
 						GsonItem j = gson.fromJson(parsedMsg[1], GsonItem.class);
-						for(GsonItem item : tb) {
+						for(GsonItem item : auctionItems) {
 							if(item.getName().equals(j.getName())) {
 								if(!item.getBidClosed()) {
 									String user = parsedMsg[2];
@@ -368,7 +368,7 @@ public class Server {
 	private static void winningBid() {
 		System.out.println("Final Bid Results Sent...");
 
-		for(GsonItem item : tb) {
+		for(GsonItem item : auctionItems) {
 			if(!item.getBidClosed()) {
 				String def = "No one";
 				if(item.getWinningBidder() != null) {
