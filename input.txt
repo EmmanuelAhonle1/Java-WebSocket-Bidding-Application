@@ -1,0 +1,29 @@
+Table
+No scratches at all
+4000.00
+5000.00
+1000
+
+Chair
+Slightly scratched
+200.00
+300.00
+2000
+
+Couch
+Weird stains :/
+40.00
+80.00
+2000
+
+Cushion
+Surprisingly comfortable
+60.00
+80.00
+2000
+
+Jerry
+Idk he's just kinda lying here
+200.00
+250.00
+2000
