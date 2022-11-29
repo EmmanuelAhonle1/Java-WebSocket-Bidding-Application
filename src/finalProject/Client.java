@@ -86,7 +86,7 @@ public class Client extends Application {
 
 	private void setUpNetworking() throws Exception {
 		@SuppressWarnings("resource")
-		Socket sock = new Socket("192.168.56.1", 4243);
+		Socket sock = new Socket("10.164.4.91", 4243);
 		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
 		reader = new BufferedReader(streamReader);
 		writer = new PrintWriter(sock.getOutputStream());
