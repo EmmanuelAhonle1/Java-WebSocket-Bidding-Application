@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -42,11 +43,12 @@ public class Server {
 	private static Boolean debug = false;
 	private static ArrayList<Users> allUsers = new ArrayList<Users>();
 	
+	
 	public static void main(String[] args) {
-		try {
+		try { 
 			//debugMode();
 			
-			setTimer(03,00);
+			setTimer(01,00);
 			
 			initializeItems();
 			
@@ -73,6 +75,7 @@ public class Server {
 		while (true) {
 			Socket clientSocket = serverSock.accept();
 			PrintWriter writer = new PrintWriter(clientSocket.getOutputStream());
+			
 			clientOutputStreams.add(writer);
 			
 
@@ -246,16 +249,40 @@ public class Server {
 						GsonItem j = gson.fromJson(parsedMsg[1], GsonItem.class);
 						for(GsonItem item : tb) {
 							if(item.getName().equals(j.getName())) {
-								if( j.getCurrBid()> item.getCurrBid()) {
-									
+								if(!item.getBidClosed()) {
 									String user = parsedMsg[2];
-									item.setCurrBid(j.getCurrBid());
-									item.setWinningBidder(user);
-									System.out.println("Bid Made for " + j.getName() + " by " + user + ": " + j.getCurrBid());
-									item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + " by " + user +  ": " + j.getCurrBid() + "\n"));
-									String msg = gson.toJson(item);
-									updateAuction("Valid Bid -> " + msg);
+									if( j.getCurrBid()> item.getCurrBid()) {
+										
+										if(j.getCurrBid() >= item.getBuyNow()) {
+											item.setCurrBid(j.getCurrBid());
+											item.setBidHistory(item.getBidHistory() + user + " has won " + item.getName() + "\n");
+											String msg = gson.toJson(item);
+											wonBid("Bid Won -> " + msg + " -> " + user);
+											item.setBidClosed();
+											item.setWinningBidder(user);
+										}
+										
+										else {
+											item.setCurrBid(j.getCurrBid());
+											item.setWinningBidder(user);
+											System.out.println("Bid Made for " + j.getName() + " by " + user + ": " + j.getCurrBid());
+											item.setBidHistory(item.getBidHistory() + ("Bid Made for " + j.getName() + " by " + user +  ": " + j.getCurrBid() + "\n"));
+											String msg = gson.toJson(item);
+											updateAuction("Valid Bid -> " + msg);
+										}
+										
+
+									}
+									else if(j.getCurrBid() < item.getCurrBid()) {
+										String msg = gson.toJson(item);
+										System.out.println("Bid made: '" + j.getCurrBid() + "' is less than or equal to current bid: " + item.getCurrBid());
+										updateAuction("Bid Under -> " + msg + " -> " + user);
+									}
 								}
+								else {
+									updateAuction("Bid Closed -> " + parsedMsg[1] + " -> " + parsedMsg[2]);
+								}
+	
 							}
 
 						}
@@ -272,6 +299,11 @@ public class Server {
 				System.out.println("Client Closed...");
 			}
 		}
+
+		private void wonBid(String string) {
+			notifyClients(string);
+		}
+
 	}
 	
 	private static void timerInit() {
@@ -327,21 +359,24 @@ public class Server {
 		System.out.println("Final Bid Results Sent...");
 
 		for(GsonItem item : tb) {
-			String def = "No one";
-			if(item.getWinningBidder() != null) {
-				def = item.getWinningBidder();
+			if(!item.getBidClosed()) {
+				String def = "No one";
+				if(item.getWinningBidder() != null) {
+					def = item.getWinningBidder();
+				}
+				item.setBidHistory(item.getBidHistory() + def + " has won " + item.getName() + "\n");
+
+			for (PrintWriter writer : clientOutputStreams) {
+
+					String converted = item.toString();
+					System.out.println("Winners -> " + converted);
+					writer.println("Winners -> " + converted);
+					writer.flush();
+				}
+
 			}
-			item.setBidHistory(item.getBidHistory() + def + " has won " + item.getName() + "\n");
-
-		for (PrintWriter writer : clientOutputStreams) {
-
-				String converted = item.toString();
-				System.out.println("Winners -> " + converted);
-				writer.println("Winners -> " + converted);
-				writer.flush();
 			}
 
-		}
 	}
 
 }

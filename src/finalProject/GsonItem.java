@@ -12,6 +12,7 @@ public class GsonItem {
 	private String timer;
 	private String bidHistory;
 	private String winningBidder;
+	private boolean bidClosed;
 		
 
 	
@@ -22,6 +23,7 @@ public class GsonItem {
 		this.buyNow = buyNow;
 		this.timer = timer;
 		this.bidHistory = bidHistory;
+		this.bidClosed = false;
 	}
 	
 
@@ -80,6 +82,18 @@ public class GsonItem {
 	public void setTimer(String timer2) {
 		// TODO Auto-generated method stub
 		this.timer = timer2;
+	}
+	
+	public void setBuyNow(int buyNow) {
+		this.buyNow = buyNow;
+	}
+	
+	public void setBidClosed() {
+		this.bidClosed = true;
+	}
+	
+	public boolean getBidClosed() {
+		return this.bidClosed;
 	}
 	
 	

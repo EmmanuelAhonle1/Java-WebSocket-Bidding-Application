@@ -62,6 +62,7 @@ public class Client extends Application {
 	
 	private Users logger;
 	private Label loginOutput;
+	Label auctionOutput;
 	
 	public static void main(String[] args) {
 		try {
@@ -101,9 +102,9 @@ public class Client extends Application {
 				while ((message = reader.readLine()) != null) {
 
 					
-					String [] l = message.split(" -> ");
+					String [] commandSplit = message.split(" -> ");
 					
-					String command = l[0];
+					String command = commandSplit[0];
 					
 					Gson gson = new Gson();
 
@@ -115,18 +116,18 @@ public class Client extends Application {
 							auction.getItems().clear();
 							
 							
-							GsonItem item = gson.fromJson(l[1], GsonItem.class);
+							GsonItem item = gson.fromJson(commandSplit[1], GsonItem.class);
 														
 							Platform.runLater(() -> {
 								auction.getItems().add(item);
 
 							});
 							
-							System.out.println("Initializing: " + l[1]);
+							System.out.println("Initializing: " + commandSplit[1]);
 							break;
 						case "Message" :
 
-							String m = l[1];
+							String m = commandSplit[1];
 							Platform.runLater(()->{
 							responseTest.setText(m);
 							
@@ -139,7 +140,7 @@ public class Client extends Application {
 							break;
 						
 						case "Valid Bid" :
-							String updater = l[1];
+							String updater = commandSplit[1];
 								GsonItem updateItem = gson.fromJson(updater, GsonItem.class);
 								
 									for(GsonItem v : auction.getItems()) {
@@ -160,7 +161,7 @@ public class Client extends Application {
 							break;
 						
 						case "Valid Login" :
-							Users sub = gson.fromJson(l[1], Users.class);
+							Users sub = gson.fromJson(commandSplit[1], Users.class);
 							System.out.println("Login succeeded for " + sub.getUser());
 							Platform.runLater(() -> {
 								loginOutput.setText("Logging in as " + sub.getUser() + "...");
@@ -178,11 +179,11 @@ public class Client extends Application {
 							break;
 						
 						case "Winners" :
-							updater = l[1];
+							updater = commandSplit[1];
 							updateItem = gson.fromJson(updater, GsonItem.class);
 							
 								for(GsonItem v : auction.getItems()) {
-									if(v.getName().equals(updateItem.getName())) {
+									if(v.getName().equals(updateItem.getName()) && !v.getBidClosed()) {
 										
 										v.setBidHistory(updateItem.getBidHistory());
 										System.out.println(v.toString());
@@ -199,9 +200,48 @@ public class Client extends Application {
 							}
 							break;
 							
+						case "Bid Won" :
+							String person = commandSplit[2];
+							updateItem = gson.fromJson(commandSplit[1], GsonItem.class);
+							for(GsonItem g : auction.getItems()) {
+								if(updateItem.getName().equals(g.getName()) && !g.getBidClosed()) {
+									g.setBidHistory(updateItem.getBidHistory());
+									
+									System.out.println(g.toString());
+									Platform.runLater(() -> {
+									});
+								g.setCurrBid(updateItem.getCurrBid());
+								
+								
+								
+								
+								auction.refresh();
+								}
+							}
+							
+							
+							break;
+							
+							
+						case "Bid Closed" :
+							updateItem = gson.fromJson(commandSplit[1], GsonItem.class);
+							person = commandSplit[2];
+							if(logger.getUser().equals(person)) {
+								
+								Platform.runLater(() -> {
+									auctionOutput.setText("Bid for " + updateItem.getName() + " has already been closed.");
+									delay(2000,() -> {
+										auctionOutput.setText("");
+									});
+								});
+
+							}
+							break;
+							
+							
 						
 						case "Timer" :
-							String timer = l[1];
+							String timer = commandSplit[1];
 							System.out.println(timer);
 							
 							Platform.runLater(() -> {
@@ -213,6 +253,31 @@ public class Client extends Application {
 							});
 							//auction.refresh();
 							break;
+							
+							
+						case "Bid Under" :
+							String currItem = commandSplit[1];
+							updateItem = gson.fromJson(currItem, GsonItem.class);
+							
+							String user = commandSplit[2];
+							
+							if(user.equals(logger.getUser())) {
+								Platform.runLater(()-> {
+									auctionOutput.setText("Invalid Bid placed: current bid for '" + updateItem.getName() + "': Current bid for item is '" + updateItem.getCurrBid() + "'");
+									delay(1000, () -> {
+										auctionOutput.setText("");
+										for(GsonItem g : auction.getItems()) {
+											if(updateItem.getName().equals(g.getName()) && !g.getBidClosed()) {
+												g.setCurrBid(updateItem.getCurrBid());
+											}
+										}
+									});
+								});
+
+							}
+							
+							break;
+							
 
 					}
 					
@@ -405,7 +470,7 @@ public class Client extends Application {
 		currBid.setCellValueFactory(new PropertyValueFactory<>("currBid"));
 
 
-		TableColumn buyNow = new TableColumn("Buy Now");
+		TableColumn buyNow = new TableColumn("Buy Now ($)");
 		buyNow.setCellValueFactory(new PropertyValueFactory<>("buyNow"));
 
 		timer = new TableColumn("Bid Time Left");
@@ -459,9 +524,7 @@ public class Client extends Application {
     			GsonBuilder builder = new GsonBuilder();
     			Gson gson = builder.create();
     			testing = auction.getSelectionModel().getSelectedItem();
-    			
-    			//GsonItem convert = new GsonItem(testing);
-    			
+    			    			
     			
     			String string = gson.toJson(testing);
     			
@@ -487,9 +550,7 @@ public class Client extends Application {
     			GsonBuilder builder = new GsonBuilder();
     			Gson gson = builder.create();
     			testing = auction.getSelectionModel().getSelectedItem();
-    			
-    			//GsonItem convert = new GsonItem(testing);
-    			
+    			    			
     			
     			String string = gson.toJson(testing);
     			
@@ -504,9 +565,13 @@ public class Client extends Application {
         
 	    Label title = new Label("Auction House :D");
 	    title.setFont(Font.font("Cambria", 32));
+	    
+	    auctionOutput = new Label();
+	    auctionOutput.setAlignment(Pos.CENTER);
+	    auctionOutput.setTextFill(Paint.valueOf("red"));
 	
 		buttonHBox.getChildren().addAll(placeBid);
-        v.getChildren().addAll(title,auction,rem,buttonHBox);
+        v.getChildren().addAll(title,auction,auctionOutput,rem,buttonHBox);
         v.setAlignment(Pos.CENTER);
 		s = new Scene(v,1000,530);
 		
