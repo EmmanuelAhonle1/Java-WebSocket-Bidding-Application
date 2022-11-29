@@ -58,7 +58,7 @@ public class Server {
 		try { 
 			//debugMode();
 			
-			setTimer(01,00);
+			setTimer(02,00);
 			
 			initializeItems();
 			
