@@ -469,6 +469,7 @@ public class Client extends Application {
 	            }
 	        }
 	    });
+	    
 
     	
     	
@@ -597,6 +598,17 @@ public class Client extends Application {
         HBox rem = new HBox(responseTest);
         rem.setAlignment(Pos.CENTER);
         
+        Button logoutButton = new Button("Log Out");
+        
+        logoutButton.setOnAction(new EventHandler<ActionEvent>() {
+       	 
+            @Override
+            public void handle(ActionEvent event) {
+            	
+    			System.exit(0);
+            } 
+        });
+        
         
 	    Label title = new Label("Auction House :D");
 	    title.setFont(Font.font("Cambria", 32));
@@ -605,10 +617,10 @@ public class Client extends Application {
 	    auctionOutput.setAlignment(Pos.CENTER);
 	    auctionOutput.setTextFill(Paint.valueOf("red"));
 	
-		buttonHBox.getChildren().addAll(placeBid);
+		buttonHBox.getChildren().addAll(placeBid,logoutButton);
         v.getChildren().addAll(title,auction,auctionOutput,rem,buttonHBox);
         v.setAlignment(Pos.CENTER);
-		s = new Scene(v,1000,530);
+		s = new Scene(v,1000,560);
 		
 	    primaryStage.setOnCloseRequest(e -> {
 	    	writer.println("Logout Request -> " + logger.getUser());
