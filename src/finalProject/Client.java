@@ -604,8 +604,9 @@ public class Client extends Application {
        	 
             @Override
             public void handle(ActionEvent event) {
-            	
-    			System.exit(0);
+    	    	writer.println("Logout Request -> " + logger.getUser());
+    	    	writer.flush();
+    	    	System.exit(0);
             } 
         });
         
