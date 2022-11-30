@@ -81,7 +81,7 @@ public class Server {
 		timerInit();
 		clientOutputStreams = new ArrayList<PrintWriter>();
 		@SuppressWarnings("resource")
-		ServerSocket serverSock = new ServerSocket(4243);
+		ServerSocket serverSock = new ServerSocket(5000);
 		while (true) {
 			Socket clientSocket = serverSock.accept();
 			PrintWriter writer = new PrintWriter(clientSocket.getOutputStream());
@@ -297,7 +297,7 @@ public class Server {
 
 						}
 						
-						
+						break;
 					}
 					
 					
