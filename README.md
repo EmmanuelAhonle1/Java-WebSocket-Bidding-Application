@@ -1,4 +1,4 @@
-# Bidding Application
+# Java WebSocket Bidding Application
 
 This project is a **multithreaded bidding application** built with **Java** and **JavaFX**, allowing users to participate in live auctions over a local Wi-Fi network. The application features real-time bid updates, user role management (registered user or guest), and a user-friendly interface for a seamless bidding experience.
 
